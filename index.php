@@ -36,6 +36,9 @@ foreach ($events as $event) {
   // テキスト返信
   $bot->replyText($event->getReplyToken(), $event->getText()."ですわよｗ");
   error_log('Bot has replyed massage. This bot is running on github');
+  // ユーザーIDをコンソールに表示
+  error_log("userID : " . $event->getUserId());
+  
 }
 
  ?>
