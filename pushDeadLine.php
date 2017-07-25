@@ -12,7 +12,7 @@ $userID = 'U9a6675ed0946c116097b44bd69024fd4';
 $message = "本日はシフト提出期限です\nシフトは提出しましたか？";
 
 
-if(date("d") == 7 || date("d") ==25){
+if(date("d") == 7 || date("d") ==22){
     $response = $bot->pushMessage($userID, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
 }
 if (!$response->isSucceeded()){
