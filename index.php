@@ -55,18 +55,18 @@ foreach ($events as $event) {
     $message = date('n月d日')."のシフトです";
     // ファイルのディレクトリを指定 
     // 絶対パス指定
-    //$filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
     // 相対パス指定
-    $filename = '../shiftpic/'.$theday.'.jpg'; 
+    //$filename = '../shiftpic/'.$theday.'.jpg'; 
 
   // 明日のパターン
   }else if($event->getText() == "明日" || $event->getText() == "あした"){
     $theday = date('Ymd',strtotime('+1 day'));
     $message = date('n月d日',strtotime('+1 day'))."のシフトです";
-    $filename = '../shiftpic/'.$theday.'.jpg'; 
+    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
   }
   error_log("\nfilename : " . $filename);
-  error_log("\nfileexists : " . is_file($filename));
+  error_log("\nfileexists : " . var_dump(is_file($filename)));
   
   // ファイルがあればシフト画像を送信する
   if($filename && is_file($filename)){
