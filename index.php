@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/vendor/autoload.php';
-
+date_default_timezone_set('Asia/Tokyo');
 //アクセストークンでCurlHTTPClientをインスタンス化
 $httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient(getenv('CHANNEL_ACCESS_TOKEN'));
 
@@ -35,21 +35,47 @@ foreach ($events as $event) {
     error_log('Non text message has come');
     continue;
   }
+  
   /*
   // テキスト返信
-  $bot->replyText($event->getReplyToken(), "今日のシフトです");
+  $bot->replyText($event->getReplyToken(), $event->getText() . "今日のシフトです");
   error_log('Bot has replyed massage. This bot is running on github');
   */
   
   // ユーザーIDをコンソールに表示
   error_log("userID : " . $event->getUserId());
   
-  // とりあえずeventからuserIdとってきて無理やりpush通知
-  $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-  // そのあとreplytoken使って画像を送信
-  replyImageMessage($bot,$event->getReplyToken(),
-  'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/20170726.jpg',
-  'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/20170726.jpg');
+  
+  // ユーザーからのテキストによってシフト画像を送信する
+  
+  // 今日のパターン
+  if($event->getText() == "今日" || $event->getText() == "きょう" ){
+    // thedayには「20170620」みたいに格納される
+    $theday = date('Ymd');
+    $message = date('m月d日')."のシフトです";
+    
+    // とりあえずeventからuserIdとってきて無理やりpush通知
+    $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+    // そのあとreplytoken使って画像を送信
+    replyImageMessage($bot,$event->getReplyToken(),
+    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg',
+    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg');
+    
+  // 明日のパターン
+  }else if($event->getText() == "明日" || $event->getText() == "あした"){
+    $theday = date('Ymd',strtotime('+1 day'));
+    $message = date('m月d日',strtotime('+1 day'))."のシフトです";
+    
+    // とりあえずeventからuserIdとってきて無理やりpush通知
+    $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+    // そのあとreplytoken使って画像を送信
+    replyImageMessage($bot,$event->getReplyToken(),
+    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg',
+    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg');
+  }
+
+  
+
   
 }
 
