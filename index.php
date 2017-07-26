@@ -54,13 +54,16 @@ foreach ($events as $event) {
     $theday = date('Ymd');
     $message = date('n月d日')."のシフトです";
     // ファイルのディレクトリを指定 
-    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+    // 絶対パス指定
+    //$filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+    // 相対パス指定
+    $filename = '../shiftpic/'.$theday.'.jpg'; 
 
   // 明日のパターン
   }else if($event->getText() == "明日" || $event->getText() == "あした"){
     $theday = date('Ymd',strtotime('+1 day'));
     $message = date('n月d日',strtotime('+1 day'))."のシフトです";
-    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+    $filename = '../shiftpic/'.$theday.'.jpg'; 
   }
   error_log("\nfilename : " . $filename);
   error_log("\nfileexists : " . file_exists($filename));
@@ -71,9 +74,18 @@ foreach ($events as $event) {
     // そのあとreplytoken使って画像を送信
     replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
   // ファイルがない場合はその旨のメッセージを送信する
-  }else{
+  }else if(!file_exists($filename)){
     $bot->replyText($event->getReplyToken(),
     "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+  }else{
+    if(date('G') > 6 && date('G') < 12){
+      $bot->replyText($event->getReplyToken(),"おはようございます");
+    }else if(date('G') >= 12 && date('G') < 18){
+      $bot->replyText($event->getReplyToken(),"こんにちは");
+    }else{
+      $bot->replyText($event->getReplyToken(),"こんばんは");
+    }
+      
   }
 
   
