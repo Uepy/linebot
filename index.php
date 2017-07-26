@@ -26,7 +26,7 @@ try {
 //配列に格納された各イベントをループ処理
 foreach ($events as $event) {
   if (!($event instanceof \LINE\LINEBot\Event\MessageEvent)) {
-    $bot->replyText($event->getReplyToken(), "そんなもん送られても何もできません");
+    $bot->replyText($event->getReplyToken(), "そんなんされても何もできません");
     error_log('Non message event has come');
     continue;
   }
@@ -52,26 +52,27 @@ foreach ($events as $event) {
   if($event->getText() == "今日" || $event->getText() == "きょう" ){
     // thedayには「20170620」みたいに格納される
     $theday = date('Ymd');
-    $message = date('m月d日')."のシフトです";
-    
-    // とりあえずeventからuserIdとってきて無理やりpush通知
-    $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-    // そのあとreplytoken使って画像を送信
-    replyImageMessage($bot,$event->getReplyToken(),
-    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg',
-    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg');
-    
+    $message = date('n月d日')."のシフトです";
+    // ファイルのディレクトリを指定 
+    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+
   // 明日のパターン
   }else if($event->getText() == "明日" || $event->getText() == "あした"){
     $theday = date('Ymd',strtotime('+1 day'));
-    $message = date('m月d日',strtotime('+1 day'))."のシフトです";
-    
+    $message = date('n月d日',strtotime('+1 day'))."のシフトです";
+    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+  }
+  
+  // ファイルがあればシフト画像を送信する
+  if(file_exists($filename)){
     // とりあえずeventからuserIdとってきて無理やりpush通知
     $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
     // そのあとreplytoken使って画像を送信
-    replyImageMessage($bot,$event->getReplyToken(),
-    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg',
-    'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg');
+    replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+  // ファイルがない場合はその旨のメッセージを送信する
+  }else{
+    $bot->replyText($event->getReplyToken(),
+    "シフト画像が見つかりませんでした\n　まだ登録されていないかもしれません");
   }
 
   
