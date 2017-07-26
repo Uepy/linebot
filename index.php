@@ -48,8 +48,8 @@ foreach ($events as $event) {
   $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
   // そのあとreplytoken使って画像を送信
   replyImageMessage($bot,$event->getReplyToken(),
-  'https://'.$_SERVER['HTTP_HOST'].'/shifitpic/20170726.jpg',
-  'https://'.$_SERVER['HTTP_HOST'].'/shifitpic/20170726.jpg');
+  'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/20170726.jpg',
+  'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/20170726.jpg');
   
 }
 
