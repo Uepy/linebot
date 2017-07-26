@@ -66,15 +66,16 @@ foreach ($events as $event) {
     $filename = '../shiftpic/'.$theday.'.jpg'; 
   }
   error_log("\nfilename : " . $filename);
-  error_log("\nfileexists : " . file_exists($filename));
+  error_log("\nfileexists : " . is_file($filename));
+  
   // ファイルがあればシフト画像を送信する
-  if(file_exists($filename)){
+  if($filename && is_file($filename)){
     // とりあえずeventからuserIdとってきて無理やりpush通知
     $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
     // そのあとreplytoken使って画像を送信
     replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
   // ファイルがない場合はその旨のメッセージを送信する
-  }else if(!file_exists($filename)){
+  }else if($filename && !is_file($filename)){
     $bot->replyText($event->getReplyToken(),
     "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
   }else{
