@@ -35,12 +35,18 @@ foreach ($events as $event) {
     error_log('Non text message has come');
     continue;
   }
+  /*
   // テキスト返信
   $bot->replyText($event->getReplyToken(), "今日のシフトです");
   error_log('Bot has replyed massage. This bot is running on github');
+  */
+  
   // ユーザーIDをコンソールに表示
   error_log("userID : " . $event->getUserId());
   
+  // とりあえずeventからuserIdとってきて無理やりpush通知
+  $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+  // そのあとreplytoken使って画像を送信
   replyImageMessage($bot,$event->getReplyToken(),
   'https://'.$_SERVER['HTTP_HOST'].'/shifitpic/20170726.jpg',
   'https://'.$_SERVER['HTTP_HOST'].'/shifitpic/20170726.jpg');
@@ -49,7 +55,8 @@ foreach ($events as $event) {
 
 // 画像を返信 引数(LINEBot,返信先,画像URL,サムネイルURL)
 function replyImageMessage($bot,$replyToken,$originalImageUrl,$previewImageUrl){
-  $response = $bot->replyMessage($replyToken,new \LINE\LINEBot\MessageBuilder\ImageMessageBuilder($originalImageUrl,$previewImageUrl));
+  $response = $bot->replyMessage($replyToken,
+  new \LINE\LINEBot\MessageBuilder\ImageMessageBuilder($originalImageUrl,$previewImageUrl));
  if (!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
  }
