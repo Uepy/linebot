@@ -43,7 +43,7 @@ foreach ($events as $event) {
   */
   
   // ユーザーIDをコンソールに表示
-  error_log("userID : " . $event->getUserId());
+  error_log("\nuserID : " . $event->getUserId());
   
   
   // ユーザーからのテキストによってシフト画像を送信する
@@ -62,7 +62,8 @@ foreach ($events as $event) {
     $message = date('n月d日',strtotime('+1 day'))."のシフトです";
     $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
   }
-  
+  error_log("\nfilename : " . $filename);
+  error_log("\nfileexists : " . file_exists($filename));
   // ファイルがあればシフト画像を送信する
   if(file_exists($filename)){
     // とりあえずeventからuserIdとってきて無理やりpush通知
@@ -72,7 +73,7 @@ foreach ($events as $event) {
   // ファイルがない場合はその旨のメッセージを送信する
   }else{
     $bot->replyText($event->getReplyToken(),
-    "シフト画像が見つかりませんでした\n　まだ登録されていないかもしれません");
+    "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
   }
 
   
