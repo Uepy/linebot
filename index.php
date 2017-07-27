@@ -161,7 +161,7 @@ class dbConnection{
 function registerUserId($userId){
   $dbh = dbConnection::getConnection();
   // pgp_sym_encryptは暗号化 引数は(暗号化するデータ, 共有鍵) 共有鍵はherokuに登録してある
-  $sql = 'insert into ' . TABLE_TO_IDENTIFY . '(userid) values
+  $sql = 'insert into ' . TABLE_TO_IDENTIFY . ' (userid) values 
   (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
@@ -172,7 +172,7 @@ function registerUserId($userId){
 function is_registeredUserId($userId){
   $dbh = dbConnection::getConnection();
   // pgp_sym_decryptは複合化
-  $sql = 'select userid from' . TABLE_TO_IDENTIFY . 'where ? =
+  $sql = 'select userid from ' . TABLE_TO_IDENTIFY . ' where ? =
   (pgp_sym_decrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
