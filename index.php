@@ -173,7 +173,7 @@ function is_registeredUserId($userId){
   $dbh = dbConnection::getConnection();
   // pgp_sym_decryptは複合化
   $sql = 'select userid from ' . TABLE_TO_IDENTIFY . ' where ? =
-  (pgp_sym_decrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
   // レコードが存在しなければfalse
