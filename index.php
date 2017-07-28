@@ -277,6 +277,8 @@ function notIdentifiedWorkers(){
     LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[2],$nameArray[2]);
     $actionArray[] = new 
     LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[3],$nameArray[3]);
+        $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[4],$nameArray[4]);
   return $actionArray;
 }
 
