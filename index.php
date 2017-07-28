@@ -5,6 +5,10 @@ date_default_timezone_set('Asia/Tokyo');
 
 // lineIDと名前を一致させるためのテーブル名を定義
 define('TABLE_TO_IDENTIFY','tbl_user_identify');
+// 従業員情報のテーブル名を定義
+define('WORKERS_INFO','tbl_workers_info');
+// アプリケーション管理者の名前
+define('APP_MANAGER','上田');
 
 //アクセストークンでCurlHTTPClientをインスタンス化
 $httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient(getenv('CHANNEL_ACCESS_TOKEN'));
@@ -27,7 +31,7 @@ try {
 } catch(\LINE\LINEBot\Exception\InvalidEventRequestException $e) {
   error_log("parseEventRequest failed. InvalidEventRequestException => ".var_export($e, true));
 }
-//配列に格納された各イベントをループ処理
+// 配列に格納された各イベントをループ処理
 foreach ($events as $event) {
   if (!($event instanceof \LINE\LINEBot\Event\MessageEvent)) {
     $bot->replyText($event->getReplyToken(), "そんなんされても何もできません");
@@ -52,11 +56,13 @@ foreach ($events as $event) {
   
   // ユーザーIDが登録されてなければ登録する
   if(is_registeredUserId($event->getUserId())){
-    echo "\n Your userID is already registerd.";
+    error_log("\n Your userID is already registerd.");
   }else{
     registerUserId($event->getUserId());
-    echo "\n Your userID is registerd in database now.";
+    error_log("\n Your userID is registerd in database now.");
   }
+  testgetarray();
+  
   
   
   // ユーザーからのテキストによってシフト画像を送信する
@@ -92,6 +98,17 @@ foreach ($events as $event) {
     $bot->replyText($event->getReplyToken(),
     "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
   }
+  
+  /*
+  // $alterText,$imageUrl,$title,$text, $actions)
+  $alterText = 'LINEのアカウントに名前を登録します';
+  $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
+  $title = 'ユーザー登録';
+  $text = "以下よりあなたの名前を選んでください\nない場合は" . APP_MANAGER . "に問い合わせてください";
+  $actionArray = array();
+  replyButtonsTemlate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$actionArray);
+  */
+  
 
   // getReplyTokenが生きてる(まだ何も返信してない)場合、挨拶しとく
   if($event->getReplyToken()){
@@ -120,6 +137,47 @@ function replyImageMessage($bot,$replyToken,$originalImageUrl,$previewImageUrl){
  if (!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
  }
+}
+
+/*
+// buttons テンプレート アクション引数が可変長版 関数がオーバーロードできればこんなコメントアウトいらないのに...
+// Buttons テンプレートを返信 
+// 引数(LINEBot,返信先,代替テキスト,画像URL,タイトル,本文,アクション(可変長引数))
+function replyButtonsTemlate($bot,$replyToken,$alterText,$imageUrl,$title,$text, ...$actions){
+  // アクションを格納する配列
+  $actionArray = array();
+  // アクションをすべて追加
+  foreach($action as $value){
+    array_push($actionArray , $value);
+  }
+  // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
+  $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
+  // ButtonTemplateBuilderの引数(タイトル,本文,画像URL,アクション配列)
+  new \LINE\LINEBot\MessageBuilder\TemplateBuilder\ButtonTemplateBuilder(
+    $title,$text,$imageUrl,$actionArray));
+    
+  $response = $bot -> replyMessage($replyToken,$builder);
+  if(!$response->isSucceeded()){
+    error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
+  }
+}
+*/
+
+// buttons テンプレート アクション引数が配列版
+// Buttons テンプレートを返信 
+// 引数(LINEBot,返信先,代替テキスト,画像URL,タイトル,本文,アクション配列)
+function replyButtonsTemlate($bot,$replyToken,$alterText,$imageUrl,$title,$text,$actionArray){
+
+  // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
+  $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
+  // ButtonTemplateBuilderの引数(タイトル,本文,画像URL,アクション配列)
+  new \LINE\LINEBot\MessageBuilder\TemplateBuilder\ButtonTemplateBuilder(
+    $title,$text,$imageUrl,$actionArray));
+    
+  $response = $bot -> replyMessage($replyToken,$builder);
+  if(!$response->isSucceeded()){
+    error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
+  }
 }
 
 // データベースへの接続を管理するクラス
@@ -185,7 +243,31 @@ function is_registeredUserId($userId){
   }
 }
   
-  
+// TABLE_TO_IDENTIFYに名前を登録する
+function userIdentify($userId,$name){
+  $dbh = dbConnection::getConnection();
+  // useridに名前を登録したら、フィールドis_identifiedもtrueにする
+  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = ? , is_identified = true where userid = 
+  (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($name,$userId));
+}
   
 
+// TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を
+// WORKERS_INFOからとってきてPostbackTemplateActionBuilerの配列を返す
+function notIdentifiedWorkers($actionArray){
+   $dbh = dbConnection::getConnection();
+}
+  
+function testgetarray(){
+  $dbh = dbConnection::getConnection();
+  $sql = 'select name from tbl_workers_info 
+  where name NOT IN (select name from tbl_user_identify where is_identified = true)';
+  $res = $dbh->query($sql);
+  $nameArray = $res->fetchAll();
+  print_r("\nnameArray : " . $nameArray);
+  $changedNameArray = array_column($nameArray,'name');
+  print_r("\nchangedNameArray : " . $changedNameArray);
+}
  ?>
