@@ -270,13 +270,13 @@ function notIdentifiedWorkers(){
   }
   */
    $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[0],$actionArray[0]);
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[0],$nameArray[0]);
+  $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[1],$nameArray[1]);
     $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[1],$actionArray[1]);
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[2],$nameArray[2]);
     $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[2],$actionArray[2]);
-    $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[3],$actionArray[3]);
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[3],$nameArray[3]);
   return $actionArray;
 }
 
