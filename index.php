@@ -263,10 +263,20 @@ function notIdentifiedWorkers(){
   $res = $dbh->query($sql);
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
+  /*
   foreach($nameArray as $value){
     $actionArray[] = new 
     LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,$value);
   }
+  */
+   $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[0],$actionArray[0]);
+    $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[1],$actionArray[1]);
+    $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[2],$actionArray[2]);
+    $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($actionArray[3],$actionArray[3]);
   return $actionArray;
 }
 
