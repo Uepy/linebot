@@ -61,7 +61,7 @@ foreach ($events as $event) {
     registerUserId($event->getUserId());
     error_log("\n Your userID is registerd in database now.");
   }
-  testgetarray();
+  
   
   
   
@@ -99,15 +99,15 @@ foreach ($events as $event) {
     "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
   }
   
-  /*
-  // $alterText,$imageUrl,$title,$text, $actions)
-  $alterText = 'LINEのアカウントに名前を登録します';
-  $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
-  $title = 'ユーザー登録';
-  $text = "以下よりあなたの名前を選んでください\nない場合は" . APP_MANAGER . "に問い合わせてください";
-  $actionArray = array();
-  replyButtonsTemlate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$actionArray);
-  */
+  
+  if($event->getText() == "登録"){
+    $alterText = 'LINEのアカウントに名前を登録します';
+    $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
+    $title = 'ユーザー登録';
+    $text = "以下よりあなたの名前を選んでください\nない場合は" . APP_MANAGER . "に問い合わせてください";
+    $actionArray = array();
+    replyButtonsTemlate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,notIdentifiedWorkers());
+  }
   
 
   // getReplyTokenが生きてる(まだ何も返信してない)場合、挨拶しとく
@@ -256,18 +256,31 @@ function userIdentify($userId,$name){
 
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を
 // WORKERS_INFOからとってきてPostbackTemplateActionBuilerの配列を返す
-function notIdentifiedWorkers($actionArray){
-   $dbh = dbConnection::getConnection();
+function notIdentifiedWorkers(){
+  $dbh = dbConnection::getConnection();
+  $sql = 'select name from ' . WORKERS_INFO . ' where 
+  name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
+  $res = $dbh->query($sql);
+  $nameArray = array_column($res->fetchAll(),'name');
+  $actionArray = array();
+  foreach($nameArray as $value){
+    $actionArray[] = new 
+    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuiler($value,$value);
+  }
+  return $actionArray;
 }
-  
+
+/*
+// TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
+// デバッグ用
 function testgetarray(){
   $dbh = dbConnection::getConnection();
-  $sql = 'select name from tbl_workers_info 
-  where name NOT IN (select name from tbl_user_identify where is_identified = true)';
+  $sql = 'select name from ' . WORKERS_INFO . ' where 
+  name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $res = $dbh->query($sql);
-  $nameArray = $res->fetchAll();
-  error_log("\nnameArray : " . print_r($nameArray,true));
-  $changedNameArray = array_column($nameArray,'name');
+  $nameArray = array_column($res->fetchAll(),'name');
   error_log("\nnameArray : " . print_r($changedNameArray,true));
 }
+*/
+
  ?>
