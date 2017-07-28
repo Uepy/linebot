@@ -266,8 +266,8 @@ function testgetarray(){
   where name NOT IN (select name from tbl_user_identify where is_identified = true)';
   $res = $dbh->query($sql);
   $nameArray = $res->fetchAll();
-  print_r("\nnameArray : " . $nameArray);
+  error_log("\nnameArray : " . $nameArray);
   $changedNameArray = array_column($nameArray,'name');
-  print_r("\nchangedNameArray : " . $changedNameArray);
+  error_log("\nchangedNameArray : " . $changedNameArray);
 }
  ?>
