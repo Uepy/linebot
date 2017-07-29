@@ -355,7 +355,7 @@ function unidentifiedWorkers($name){
   $sql = 'select name from ' . WORKERS_INFO . ' where 
   name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->query($sql);
-  $nameArray = array_column($res->fetchAll(),'name');
+  $nameArray = array_column($sth->fetchAll(),'name');
   $actionArray = array();
   
   foreach($nameArray as $value){
