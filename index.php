@@ -272,9 +272,9 @@ function is_ready2identify($userId){
   $sql = 'select ready_to_identify from ' . TABLE_TO_IDENTIFY . ' where ? =
   (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
-  $sth->execute(array($userId));
-  //$tmp = $sth->fetch();
-    if(($row = $sth->fetch())){
+  $ready = array_column($sth->fetch(),'ready_to_identify');
+  
+  if($ready[0] == true){
     //return false;
     error_log("\nready is true " );
   }else{
