@@ -353,16 +353,17 @@ function unidentifiedWorkers($name){
   $dbh = dbConnection::getConnection();
   // サブクエリでNOT INを使って TABLE_TO_IDENTIFY から名前をとってくる
   $sql = 'select name from ' . WORKERS_INFO . ' where 
-  name = ? NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
-  $sth = $dbh->prepare($sql);
-  // string で渡された$nameはクエリ内で比較できないため、bindしておく
-  $strname = (String)$name;
-  $sth->bindValue(1, $strname, PDO::PARAM_STR);
-  $sth->execute();
+  name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
+  $sth = $dbh->query($sql);
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
-  $actionArray[] = new 
-  LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[0],$nameArray[0]);
+  
+  foreach($nameArray as $value){
+    if($value == $name){
+      $actionArray[] = new 
+      LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,$value);
+    }
+  }
 
   return $actionArray;
 }
