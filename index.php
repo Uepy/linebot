@@ -87,7 +87,7 @@ foreach ($events as $event) {
     if(getIsIdentified($userId)){
       $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
     }else{ 
-      ready2identify($event->getUserId(),'true');
+      setReady2Identify($event->getUserId(),'true');
       $bot->replyText($event->getReplyToken(), "あなたの名前をフルネームで教えてください");
     }
   }
