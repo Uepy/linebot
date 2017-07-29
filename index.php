@@ -274,7 +274,7 @@ function is_ready2identify($userId){
   $sth = $dbh->prepare($sql);
   $ready = array_column($sth->fetch(),'ready_to_identify');
   
-  if($ready[0] == true){
+  if($ready[0] == 1){
     //return false;
     error_log("\nready is true " );
   }else{
