@@ -356,7 +356,8 @@ function unidentifiedWorkers($name){
   name = ? NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->prepare($sql);
   // string で渡された$nameはクエリ内で比較できないため、bindしておく
-  $sth->bindValue(1, $name, PDO::PARAM_STR);
+  $strname = (String)$name;
+  $sth->bindValue(1, $strname, PDO::PARAM_STR);
   $sth->execute();
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
