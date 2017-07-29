@@ -273,7 +273,16 @@ function is_ready2identify($userId){
   (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
-  $tmp = $sth->fetch();
+  //$tmp = $sth->fetch();
+    if(!($row = $sth->fetch())){
+    //return false;
+    error_log("\nready is false " );
+  }else{
+    // ある場合はtrue
+    //return true;
+    error_log("\nready is true" );
+  }
+  /*
   error_log("\ntmp : " . print_r($tmp,true));
   $ready = array_column($sth->fetch(),'ready_to_identify');
   error_log("\nready : " . print_r($ready,true));
@@ -284,6 +293,7 @@ function is_ready2identify($userId){
   }else{
     error_log("\nready isnt true and false " );
   }
+  */
 }
 
 
