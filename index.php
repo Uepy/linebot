@@ -62,6 +62,10 @@ foreach ($events as $event) {
     error_log("\n Your userID is registerd in database now.");
   }
   
+  is_ready2identify($event->getUserId());
+  if($event->getText() == "登録"){
+    ready2identify($event->getUserId());
+  }
   
   
   
@@ -99,7 +103,7 @@ foreach ($events as $event) {
     "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
   }
   
-  
+  /*
   if($event->getText() == "登録"){
     $alterText = 'LINEのアカウントに名前を登録します';
     $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
@@ -108,7 +112,7 @@ foreach ($events as $event) {
     $actionArray = array();
     replyButtonsTemlate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,notIdentifiedWorkers());
   }
-  
+  */
 
   // getReplyTokenが生きてる(まだ何も返信してない)場合、挨拶しとく
   if($event->getReplyToken()){
@@ -252,7 +256,40 @@ function userIdentify($userId,$name){
   $sth = $dbh->prepare($sql);
   $sth->execute(array($name,$userId));
 }
-  
+
+// TABLE_TO_IDENTIFYのready_to_identifyをtrueにする
+function ready2identify($userId){
+  $dbh = dbConnection::getConnection();
+  $sql = 'update ' . TABLE_TO_IDENTIFY . ' set redy_to_identify = true where ? =
+  (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($userId));
+}
+
+// TABLE_TO_IDENTIFYのready_to_identifyがtrueならtrueをfalseならfalseを返す
+function is_ready2identify($userId){
+  $dbh = dbConnection::getConnection();
+  $sql = 'select redy_to_identify ' . TABLE_TO_IDENTIFY . ' where ? =
+  (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($userId));
+  $ready = array_column($sth->fetch(),'ready_to_identify');
+  error_log("\nready : " . print_r($ready,true));
+  if($ready[0]){
+    error_log("\nready is true" );
+  }else if(!$ready[0]){
+    error_log("\nready is false " );
+  }else{
+    error_log("\nready isnt true and false " );
+  }
+}
+
+
+
+
+/*  
+// ########### LineSDK 側のエラーで、リッチテキストのボタンは4個までしか作れないとのことだった　###########
+// ########### そのためこの関数はいったん開発中ということで置いておく マジアリエン　###########
 
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を
 // WORKERS_INFOからとってきてPostbackTemplateActionBuilerの配列を返す
@@ -263,24 +300,14 @@ function notIdentifiedWorkers(){
   $res = $dbh->query($sql);
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
-  /*
+
   foreach($nameArray as $value){
     $actionArray[] = new 
     LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,$value);
   }
-  */
-   $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[0],$nameArray[0]);
-  $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[1],$nameArray[1]);
-    $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[2],$nameArray[2]);
-    $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[3],$nameArray[3]);
-        $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[4],$nameArray[4]);
   return $actionArray;
 }
+*/
 
 /*
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
@@ -291,7 +318,7 @@ function testgetarray(){
   name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $res = $dbh->query($sql);
   $nameArray = array_column($res->fetchAll(),'name');
-  error_log("\nnameArray : " . print_r($changedNameArray,true));
+  error_log("\nnameArray : " . print_r($nameArray,true));
 }
 */
 
