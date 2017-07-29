@@ -269,7 +269,7 @@ function ready2identify($userId){
 // TABLE_TO_IDENTIFYのready_to_identifyがtrueならtrueをfalseならfalseを返す
 function is_ready2identify($userId){
   $dbh = dbConnection::getConnection();
-  $sql = 'select ready_to_identify ' . TABLE_TO_IDENTIFY . ' where ? =
+  $sql = 'select ready_to_identify from ' . TABLE_TO_IDENTIFY . ' where ? =
   (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
