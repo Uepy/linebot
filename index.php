@@ -314,7 +314,7 @@ function getReady2Identify($userId){
   $sql = 'select ready_to_identify from ' . TABLE_TO_IDENTIFY . ' where ? =
   (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
-  $sth->execute(array((string)$userId));
+  $sth->execute(array($userId));
 
   $ready = array_column($sth->fetchAll(),'ready_to_identify');
   error_log("\nready : " . print_r($ready,true));
@@ -355,7 +355,7 @@ function unidentifiedWorkers($name){
   $sql = 'select name from ' . WORKERS_INFO . ' where 
   name = ? NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->prepare($sql);
-  $sth->execute(array($name));
+  $sth->execute(array((string)$name));
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
   $actionArray[] = new 
