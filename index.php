@@ -274,13 +274,13 @@ function is_ready2identify($userId){
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
   //$tmp = $sth->fetch();
-    if(!($row = $sth->fetch())){
+    if(($row = $sth->fetch())){
     //return false;
-    error_log("\nready is false " );
+    error_log("\nready is true " );
   }else{
     // ある場合はtrue
     //return true;
-    error_log("\nready is true" );
+    error_log("\nready is false" );
   }
   /*
   error_log("\ntmp : " . print_r($tmp,true));
