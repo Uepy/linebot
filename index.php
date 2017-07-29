@@ -351,13 +351,13 @@ function getReady2Identify($userId){
 // WORKERS_INFOからとってきてPostbackTemplateActionBuilerの配列を返す
 function unidentifiedWorkers($name){
   $dbh = dbConnection::getConnection();
-  // string で渡された$nameはクエリ内で比較できないため、charに変換しておく
-  $charName = str_split($name);
   // サブクエリでNOT INを使って TABLE_TO_IDENTIFY から名前をとってくる
   $sql = 'select name from ' . WORKERS_INFO . ' where 
   name = ? NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->prepare($sql);
-  $sth->execute(array($charName));
+  // string で渡された$nameはクエリ内で比較できないため、bindしておく
+  $sth->bindValue(1, $name, PDO::PARAM_STR);
+  $sth->execute();
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
   $actionArray[] = new 
