@@ -58,13 +58,38 @@ foreach ($events as $event) {
   if(is_registeredUserId($event->getUserId())){
     error_log("\n Your userID is already registerd.");
   }else{
-    registerUserId($event->getUserId());
+    setRegisterUserId($event->getUserId());
     error_log("\n Your userID is registerd in database now.");
   }
   
-  is_ready2identify($event->getUserId());
+  // userid登録フェーズ
+  if(getReady2Identify($event->getUserId())){
+    // ユーザーから送られてきたテキストが、未登録者であるか
+    $templatePostbackAction = unidentifiedWorkers($event->getText());
+    if($templatePostbackAction){
+    $alterText = 'LINEのアカウントに名前を登録します';
+    $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
+    $title = 'ユーザー登録';
+    $text = "以下よりあなたの名前を選んでください";
+    $actionArray = array();
+    replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
+      
+    }else{
+      $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません\n" . 
+      APP_MANAGER . "に問い合わせてください");
+      setReady2Identify($event->getUserId(),'false');
+    }
+  }
+  
+  // "登録"というテキストが来たら、userid登録フェーズに移る
   if($event->getText() == "登録"){
-    ready2identify($event->getUserId());
+    // すでにuseridが登録されていたらはじく
+    if(getIsIdentified($userId)){
+      $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
+    }else{ 
+      ready2identify($event->getUserId(),'true');
+      $bot->replyText($event->getReplyToken(), "あなたの名前をフルネームで教えてください");
+    }
   }
   
   
@@ -108,9 +133,9 @@ foreach ($events as $event) {
     $alterText = 'LINEのアカウントに名前を登録します';
     $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
     $title = 'ユーザー登録';
-    $text = "以下よりあなたの名前を選んでください\nない場合は" . APP_MANAGER . "に問い合わせてください";
+    $text = "以下よりあなたの名前を選んでください";
     $actionArray = array();
-    replyButtonsTemlate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,notIdentifiedWorkers());
+    replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,notIdentifiedWorkers());
   }
   */
 
@@ -170,7 +195,7 @@ function replyButtonsTemlate($bot,$replyToken,$alterText,$imageUrl,$title,$text,
 // buttons テンプレート アクション引数が配列版
 // Buttons テンプレートを返信 
 // 引数(LINEBot,返信先,代替テキスト,画像URL,タイトル,本文,アクション配列)
-function replyButtonsTemlate($bot,$replyToken,$alterText,$imageUrl,$title,$text,$actionArray){
+function replyButtonsTemplate($bot,$replyToken,$alterText,$imageUrl,$title,$text,$actionArray){
 
   // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
   $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
@@ -220,7 +245,7 @@ class dbConnection{
 // is_registeredUserId()と併用すべし
 // ** 狭域かつ限定的にしかシフト通知君を公開していないのでこれでもいいかもしれないが
 // システムが大きくなればこれはよくない気がする **
-function registerUserId($userId){
+function setRegisterUserId($userId){
   $dbh = dbConnection::getConnection();
   // pgp_sym_encryptは暗号化 引数は(暗号化するデータ, 共有鍵) 共有鍵はherokuに登録してある
   $sql = 'insert into ' . TABLE_TO_IDENTIFY . ' (userid) values 
@@ -248,7 +273,7 @@ function is_registeredUserId($userId){
 }
   
 // TABLE_TO_IDENTIFYに名前を登録する
-function userIdentify($userId,$name){
+function setUserName($userId,$name){
   $dbh = dbConnection::getConnection();
   // useridに名前を登録したら、フィールドis_identifiedもtrueにする
   $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = ? , is_identified = true where userid = 
@@ -257,46 +282,50 @@ function userIdentify($userId,$name){
   $sth->execute(array($name,$userId));
 }
 
-// TABLE_TO_IDENTIFYのready_to_identifyをtrueにする
-function ready2identify($userId){
+
+// TABLE_TO_IDENTIFYのis_identifiedの(true/false)を返す
+function getIsIdentified($userId){
   $dbh = dbConnection::getConnection();
-  $sql = 'update ' . TABLE_TO_IDENTIFY . ' set ready_to_identify = true where ? =
+  $sql = 'select is_identified from ' . TABLE_TO_IDENTIFY . ' where ? =
   (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
+  $identify = array_column($sth->fetchAll(),'is_identified');
+  if($identify[0] == 1){
+    return true;
+  }else{
+    return false;
+  }
 }
 
-// TABLE_TO_IDENTIFYのready_to_identifyがtrueならtrueをfalseならfalseを返す
-function is_ready2identify($userId){
+// TABLE_TO_IDENTIFYのready_to_identifyの(true/false)をスイッチする
+function setReady2Identify($userId,$bool){
+  $dbh = dbConnection::getConnection();
+  $sql = 'update ' . TABLE_TO_IDENTIFY . ' set ready_to_identify = ? where ? =
+  (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($bool,$userId));
+}
+
+
+// TABLE_TO_IDENTIFYのready_to_identify(true/false)を返す
+function getReady2Identify($userId){
   $dbh = dbConnection::getConnection();
   $sql = 'select ready_to_identify from ' . TABLE_TO_IDENTIFY . ' where ? =
   (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
-  if(array_column($sth->fetchAll(),'ready_to_identify')){
-        //return false;
-    error_log("\nready is true " );
-  }else{
-    // ある場合はtrue
-    //return true;
-    error_log("\nready is false" );
-  
-  }
-  
-  /*
+
   $ready = array_column($sth->fetchAll(),'ready_to_identify');
-  $preready = $sth->fetchAll();
   error_log("\nready : " . print_r($ready,true));
-  error_log("\npreready : " . print_r($preready,true));
   if($ready[0] == 1){
-    //return false;
     error_log("\nready is true " );
+    return true;
   }else{
-    // ある場合はtrue
-    //return true;
     error_log("\nready is false" );
+    return false;
   }
-  */
+  
   /*
   error_log("\ntmp : " . print_r($tmp,true));
   $ready = array_column($sth->fetch(),'ready_to_identify');
@@ -314,27 +343,27 @@ function is_ready2identify($userId){
 
 
 
-/*  
+
 // ########### LineSDK 側のエラーで、リッチテキストのボタンは4個までしか作れないとのことだった　###########
 // ########### そのためこの関数はいったん開発中ということで置いておく マジアリエン　###########
 
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を
 // WORKERS_INFOからとってきてPostbackTemplateActionBuilerの配列を返す
-function notIdentifiedWorkers(){
+function unidentifiedWorkers($name){
   $dbh = dbConnection::getConnection();
+  // サブクエリでNOT INを使って TABLE_TO_IDENTIFY から名前をとってくる
   $sql = 'select name from ' . WORKERS_INFO . ' where 
-  name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
-  $res = $dbh->query($sql);
+  name = ? NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($name));
   $nameArray = array_column($res->fetchAll(),'name');
   $actionArray = array();
+  $actionArray[] = new 
+  LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($nameArray[0],$nameArray[0]);
 
-  foreach($nameArray as $value){
-    $actionArray[] = new 
-    LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,$value);
-  }
   return $actionArray;
 }
-*/
+
 
 /*
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
