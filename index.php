@@ -100,40 +100,46 @@ foreach ($events as $event) {
   
   // ユーザーからのテキストによってシフト画像を送信する
   // phpの例外処理がよくわからん！から、このtry-catch文はよくないかもしれない
-  try{
     // 今日のパターン
-    if($event->getText() == "今日" || $event->getText() == "きょう" ){
-      
-      // thedayには「20170620」みたいに格納される
-      $theday = date('Ymd');
-      $message = date('n月j日')."のシフトです";
-      // ファイルのディレクトリを指定 
-      // 絶対パス指定
-      $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
-      error_log("file_exists : " . file_exists($filename));
-      // 相対パス指定
-      //$filename = '../shiftpic/'.$theday.'.jpg'; 
+  if($event->getText() == "今日" || $event->getText() == "きょう" ){
+    
+    // thedayには「20170620」みたいに格納される
+    $theday = date('Ymd');
+    $message = date('n月j日')."のシフトです";
+    // ファイルのディレクトリを指定 
+    // 絶対パス指定
+    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+    // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
+    if(strpos(array_shift(get_headers($filename)),'OK')){
       // とりあえずeventからuserIdとってきて無理やりpush通知
       $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
       // そのあとreplytoken使って画像を送信
       replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
-  
-    // 明日のパターン
-    }else if($event->getText() == "明日" || $event->getText() == "あした"){
-      $theday = date('Ymd',strtotime('+1 day'));
-      $message = date('n月j日',strtotime('+1 day'))."のシフトです";
-      $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
-      error_log("file_exists : " . file_exists($filename));
-      // とりあえずeventからuserIdとってきて無理やりpush通知
-      $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-      // そのあとreplytoken使って画像を送信
-      replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+    }else{
+      // ファイルがない場合はその旨のメッセージを送信する
+      $bot->replyText($event->getReplyToken(),
+      "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
     }
-    // ファイルがない場合はその旨のメッセージを送信する
-  }catch(Exception $e){
-    $bot->replyText($event->getReplyToken(),
-    "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+
+  // 明日のパターン
+  }else if($event->getText() == "明日" || $event->getText() == "あした"){
+    $theday = date('Ymd',strtotime('+1 day'));
+    $message = date('n月j日',strtotime('+1 day'))."のシフトです";
+    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
+    // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
+    if(strpos(array_shift(get_headers($filename)),'OK')){
+      // とりあえずeventからuserIdとってきて無理やりpush通知
+      $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+      // そのあとreplytoken使って画像を送信
+      replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+    }else{
+      // ファイルがない場合はその旨のメッセージを送信する
+      $bot->replyText($event->getReplyToken(),
+      "シフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+    }
   }
+  
+
   
   /*
   if($event->getText() == "登録"){
