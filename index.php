@@ -39,7 +39,7 @@ foreach ($events as $event) {
     continue;
   }
   if (!($event instanceof \LINE\LINEBot\Event\MessageEvent\TextMessage)) {
-    $bot->replyText($event->getReplyToken(), "そんなもん送られても困ります");
+    // $bot->replyText($event->getReplyToken(), "そんなもん送られても困ります");
     error_log('Non text message has come');
     continue;
   }
@@ -67,18 +67,22 @@ foreach ($events as $event) {
     // ユーザーから送られてきたテキストが、未登録者であるか
     $templatePostbackAction = unidentifiedWorkers($event->getText());
     if($templatePostbackAction){
-    $alterText = 'LINEのアカウントに名前を登録します';
-    $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
-    $title = 'ユーザー登録';
-    $text = "以下よりあなたの名前を選んでください";
-    $actionArray = array();
-    replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
+      $alterText = 'LINEのアカウントに名前を登録します';
+      $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
+      $title = 'ユーザー登録';
+      $text = "あなたの名前を選んでください";
+      $actionArray = array();
+      replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
       
     }else{
-      $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません\n" . 
-      APP_MANAGER . "に問い合わせてください");
+      $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。
+      一度" . APP_MANAGER . "に問い合わせてみてください。");
       setReady2Identify($event->getUserId(),'false');
     }
+  }
+  
+  if($event instanceof \LINE\LINEBot\Event\PostbackEvent && getReady2Identify($event->getUserId())){
+    
   }
   
   // "登録"というテキストが来たら、userid登録フェーズに移る
@@ -88,7 +92,7 @@ foreach ($events as $event) {
       $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
     }else{ 
       setReady2Identify($event->getUserId(),'true');
-      $bot->replyText($event->getReplyToken(), "あなたの名前をフルネームで教えてください");
+      $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください");
     }
   }
   
@@ -99,12 +103,14 @@ foreach ($events as $event) {
   try{
     // 今日のパターン
     if($event->getText() == "今日" || $event->getText() == "きょう" ){
+      
       // thedayには「20170620」みたいに格納される
       $theday = date('Ymd');
-      $message = date('n月d日')."のシフトです";
+      $message = date('n月j日')."のシフトです";
       // ファイルのディレクトリを指定 
       // 絶対パス指定
       $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+      error_log("file_exists : " . file_exists($filename));
       // 相対パス指定
       //$filename = '../shiftpic/'.$theday.'.jpg'; 
       // とりあえずeventからuserIdとってきて無理やりpush通知
@@ -115,8 +121,9 @@ foreach ($events as $event) {
     // 明日のパターン
     }else if($event->getText() == "明日" || $event->getText() == "あした"){
       $theday = date('Ymd',strtotime('+1 day'));
-      $message = date('n月d日',strtotime('+1 day'))."のシフトです";
+      $message = date('n月j日',strtotime('+1 day'))."のシフトです";
       $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
+      error_log("file_exists : " . file_exists($filename));
       // とりあえずeventからuserIdとってきて無理やりpush通知
       $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
       // そのあとreplytoken使って画像を送信
@@ -208,6 +215,23 @@ function replyButtonsTemplate($bot,$replyToken,$alterText,$imageUrl,$title,$text
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
   }
 }
+
+// Confirm テンプレートを返信 
+// 引数(LINEBot,返信先,代替テキスト,本文,可変長アクション配列)
+function replyConfirmTemplate($bot,$replyToken,$alterText,$text,$actionArray){
+
+  // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
+  $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
+  // ButtonTemplateBuilderの引数(タイトル,本文,画像URL,アクション配列)
+  new \LINE\LINEBot\MessageBuilder\TemplateBuilder\ConfirmTemplateBuilder(
+    $text,$actionArray));
+    
+  $response = $bot -> replyMessage($replyToken,$builder);
+  if(!$response->isSucceeded()){
+    error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
+  }
+}
+
 
 // データベースへの接続を管理するクラス
 class dbConnection{
@@ -361,7 +385,7 @@ function unidentifiedWorkers($name){
   foreach($nameArray as $value){
     if($value == $name){
       $actionArray[] = new 
-      LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,$value);
+      LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,'cmd_'. $value);
     }
   }
 
