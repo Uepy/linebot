@@ -135,7 +135,7 @@ foreach ($events as $event) {
     }else{
       // ファイルがない場合はその旨のメッセージを送信する
       $bot->replyText($event->getReplyToken(),
-      date('n月j日'). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+      date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
     }
   }
   
