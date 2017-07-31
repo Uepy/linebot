@@ -84,7 +84,6 @@ foreach ($events as $event) {
   
   
   
-  $userText = $event->getText();
   
   // ユーザーIDをコンソールに表示
   error_log("\nuserID : " . $userId);
@@ -103,7 +102,7 @@ foreach ($events as $event) {
   // TABLE_TO_IDENTIFYのready_to_idnetifyがtureの時のみ通過
   if(getReady2Identify($userId)){
     // ユーザーから送られてきたテキスト(名前)が、未登録者であるか
-    $templatePostbackAction = unidentifiedWorkers($userText);
+    $templatePostbackAction = unidentifiedWorkers($event->getText());
     if($templatePostbackAction){
       $alterText = 'LINEのアカウントに名前を登録します';
       $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
@@ -123,7 +122,7 @@ foreach ($events as $event) {
   
   
   
-  switch ($userText) {
+  switch ($event->getText()) {
     
     // "登録"というテキストが来たら、userid登録フェーズに移る
     case '登録':
