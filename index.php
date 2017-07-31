@@ -403,11 +403,14 @@ function unidentifiedWorkers($name){
 function pushShift($date){
   $dbh = dbConnection::getConnection();
   // 
-  $sql = 'select x.userid , x.name , y.shift_in , y.shift_out from tbl_workers_info as x 
+  $sql = 'select pgp_sym_decrypt(x.userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') , x.name , y.shift_in , y.shift_out from tbl_workers_info as x 
   join tbl_'.$date. ' as y using(id);';
   $sth = $dbh->query($sql);
   $shiftDataArray = $sth->fetchAll();
-  error_log("\nshiftDataArray : " . print_r($shiftDataArray,true));
+  error_log("\n shiftDataArray : " . print_r($shiftDataArray,true));
+  foreach($shiftDataArray as $value){
+    error_log("\n".$value[1]."さん、シフトイン時刻は" .$value[2]. "シフトアウト時刻は".$value[3]."です。あなたのuseridは".$value[0]."です。");
+  }
 }
 
 /*
