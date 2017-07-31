@@ -409,7 +409,7 @@ function pushShift($date){
   $shiftDataArray = $sth->fetchAll();
   error_log("\n shiftDataArray : " . print_r($shiftDataArray,true));
   foreach($shiftDataArray as $value){
-    error_log("\n".$value[1]."さん、シフトイン時刻は" .$value[2]. "シフトアウト時刻は".$value[3]."です。あなたのuseridは".$value[0]."です。");
+    error_log("\n".$value[1]."さん、シフトイン時刻は" .substr($value[2],0,5). "シフトアウト時刻は".substr($value[3],0,5)."です。あなたのuseridは".$value[0]."です。");
   }
 }
 
