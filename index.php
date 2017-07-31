@@ -33,11 +33,6 @@ try {
 }
 // 配列に格納された各イベントをループ処理
 foreach ($events as $event) {
-  if (!($event instanceof \LINE\LINEBot\Event\MessageEvent)) {
-    //$bot->replyText($event->getReplyToken(), "そんなんされても何もできません");
-    error_log('Non message event has come');
-    continue;
-  }
   if (!($event instanceof \LINE\LINEBot\Event\MessageEvent\TextMessage)) {
     // $bot->replyText($event->getReplyToken(), "そんなもん送られても困ります");
     error_log('Non text message has come');
@@ -454,22 +449,25 @@ function unidentifiedWorkers($name){
   name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->query($sql);
   $nameArray = array_column($sth->fetchAll(),'name');
-  error_log("\nnameArray : " . print_r($nameArray,true));
-  if($nameArray){
-    $actionArray = array();
-    
-    foreach($nameArray as $value){
-      if($value == $name){
-        $actionArray[] = new 
-        LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,'cmd_'. $value);
-      }
+  
+  $actionArray = array();
+  
+  foreach($nameArray as $value){
+    if($value == $name){
+      $actionArray[] = new 
+      LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,'cmd_'. $value);
     }
-    
+  }
+  if($actionArray){
     // actionArrayの最後にキャンセルのボタンも追加する
     $actionArray[] = new 
         LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('キャンセル','cmd_cancel');
+    error_log("\nactionArray : " . print_r($actionArray,true));
+    return $actionArray;
+  }else{
+    error_log("\nactionArray : " . print_r($actionArray,true));
+    return $actionArray;
   }
-  return $actionArray;
 }
 
 /*
