@@ -34,7 +34,7 @@ try {
 // 配列に格納された各イベントをループ処理
 foreach ($events as $event) {
   if (!($event instanceof \LINE\LINEBot\Event\MessageEvent)) {
-    $bot->replyText($event->getReplyToken(), "そんなんされても何もできません");
+    //$bot->replyText($event->getReplyToken(), "そんなんされても何もできません");
     error_log('Non message event has come');
     continue;
   }
@@ -415,7 +415,7 @@ function getReady2Identify($userId){
   $sth->execute(array($userId));
 
   $ready = array_column($sth->fetchAll(),'ready_to_identify');
-  error_log("\nready : " . print_r($ready,true));
+  //error_log("\nready : " . print_r($ready,true));
   if($ready[0] == 1){
     error_log("\nready is true " );
     return true;
@@ -454,6 +454,7 @@ function unidentifiedWorkers($name){
   name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->query($sql);
   $nameArray = array_column($sth->fetchAll(),'name');
+  error_log("\nnameArray : " . print_r($nameArray,true));
   if($nameArray){
     $actionArray = array();
     
