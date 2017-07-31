@@ -88,7 +88,7 @@ foreach ($events as $event) {
   }
   
 
-  // イベントがPostBackの時、TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
+  // イベントがPostBackの時、
   if($event instanceof \LINE\LINEBot\Event\PostbackEvent){
     
     switch ($event->getPostbackData()) {
@@ -109,6 +109,7 @@ foreach ($events as $event) {
         break;
         
       default :
+        // TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
         if(getReady2Identify($userId)){
           // 一時的に名前を登録、is_identifiedはtrueにしない
           setUserName($userId,$event->getPostbackData(),5);
@@ -471,7 +472,7 @@ function unidentifiedWorkers($name){
 }
 
 
-
+// 
 /*
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
 // デバッグ用
