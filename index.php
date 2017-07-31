@@ -75,129 +75,125 @@ foreach ($events as $event) {
         }
         break;
     }
-  }
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  // ユーザーIDをコンソールに表示
-  error_log("\nuserID : " . $userId);
-  
-  
-  // ユーザーIDが登録されてなければ登録する
-  if(is_registeredUserId($userId)){
-    error_log("\n Your userID is already registerd.");
-  }else{
-    registerUserId($userId);
-    error_log("\n Your userID is registerd in database now.");
-  }
-  
-  
-  // userid登録フェーズ
-  // TABLE_TO_IDENTIFYのready_to_idnetifyがtureの時のみ通過
-  if(getReady2Identify($userId)){
-    // ユーザーから送られてきたテキスト(名前)が、未登録者であるか
-    $templatePostbackAction = unidentifiedWorkers($event->getText());
-    if($templatePostbackAction){
-      $alterText = 'LINEのアカウントに名前を登録します';
-      $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
-      $title = 'ユーザー登録';
-      $text = "あなたの名前を選んでください";
-      $actionArray = array();
-      replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
-      
-    }else{
-      $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
-      . APP_MANAGER . "に問い合わせてみてください。");
-      setReady2Identify($userId,'false');
-    }
-  }
-  
+    
+    
+  }else if($event instanceof \LINE\LINEBot\Event\MessageEvent\TextMessage){
 
-  
-  
-  
-  switch ($event->getText()) {
+    // ユーザーIDをコンソールに表示
+    error_log("\nuserID : " . $userId);
     
-    // "登録"というテキストが来たら、userid登録フェーズに移る
-    case '登録':
-      // すでにuseridが登録されていたらはじく
-      if(getIsIdentified($userId)){
-        $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
-      }else{ 
-        setReady2Identify($userId,'true');
-        $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください");
-      }
-      break;
-      
-    // ユーザーからのテキストによってシフト画像を送信する
-    // 今日のパターン
-    case "今日":
-    case "きょう":
-    case "本日":
-    case "ほんじつ":
-    case "today":
-    case "Today":
-    case "TODAY":
-      // thedayには「20170620」みたいに格納される
-      $theday = date('Ymd');
-      $message = date('n月j日')."のシフトです";
-      // ファイルのディレクトリを指定 
-      $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
-      // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
-      if(strpos(array_shift(get_headers($filename)),'OK')){
-        // とりあえずeventからuserIdとってきて無理やりpush通知
-        $bot->pushMessage($userId, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-        // そのあとreplytoken使って画像を送信
-        replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
-      }else{
-        // ファイルがない場合はその旨のメッセージを送信する
-        $bot->replyText($event->getReplyToken(),
-        date('n月j日'). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
-      }
-      break;
-      
-    // ユーザーからのテキストによってシフト画像を送信する
-    // 明日のパターン
-    case "明日":
-    case "あした":
-    case "あす":
-    case "tomorrow":
-    case "Tomorrow":
-    case "TOMORROW":
-      $theday = date('Ymd',strtotime('+1 day'));
-      $message = date('n月j日',strtotime('+1 day'))."のシフトです";
-      $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
-      // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
-      if(strpos(array_shift(get_headers($filename)),'OK')){
-        // とりあえずeventからuserIdとってきて無理やりpush通知
-        $bot->pushMessage($userId, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-        // そのあとreplytoken使って画像を送信
-        replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
-      }else{
-        // ファイルがない場合はその旨のメッセージを送信する
-        $bot->replyText($event->getReplyToken(),
-        date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
-      }
-      break;
     
-    // どれでもない場合は、時間帯によって挨拶しとく
-    default:
-      if(date('G') > 6 && date('G') < 12){
-        $bot->replyText($event->getReplyToken(),"おはようございます");
-      }else if(date('G') >= 12 && date('G') < 18){
-        $bot->replyText($event->getReplyToken(),"こんにちは");
-      }else if(date('G') >= 2 && date('G') < 6){
-        $bot->replyText($event->getReplyToken(),"はよ寝なさい");
+    // ユーザーIDが登録されてなければ登録する
+    if(is_registeredUserId($userId)){
+      error_log("\n Your userID is already registerd.");
+    }else{
+      registerUserId($userId);
+      error_log("\n Your userID is registerd in database now.");
+    }
+    
+    
+    // userid登録フェーズ
+    // TABLE_TO_IDENTIFYのready_to_idnetifyがtureの時のみ通過
+    if(getReady2Identify($userId)){
+      // ユーザーから送られてきたテキスト(名前)が、未登録者であるか
+      $templatePostbackAction = unidentifiedWorkers($event->getText());
+      if($templatePostbackAction){
+        $alterText = 'LINEのアカウントに名前を登録します';
+        $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
+        $title = 'ユーザー登録';
+        $text = "あなたの名前を選んでください";
+        $actionArray = array();
+        replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
+        
       }else{
-        $bot->replyText($event->getReplyToken(),"こんばんは");
+        $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
+        . APP_MANAGER . "に問い合わせてみてください。");
+        setReady2Identify($userId,'false');
       }
-      break;
+    }
+    
+  
+    
+    
+    
+    switch ($event->getText()) {
+      
+      // "登録"というテキストが来たら、userid登録フェーズに移る
+      case '登録':
+        // すでにuseridが登録されていたらはじく
+        if(getIsIdentified($userId)){
+          $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
+        }else{ 
+          setReady2Identify($userId,'true');
+          $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください");
+        }
+        break;
+        
+      // ユーザーからのテキストによってシフト画像を送信する
+      // 今日のパターン
+      case "今日":
+      case "きょう":
+      case "本日":
+      case "ほんじつ":
+      case "today":
+      case "Today":
+      case "TODAY":
+        // thedayには「20170620」みたいに格納される
+        $theday = date('Ymd');
+        $message = date('n月j日')."のシフトです";
+        // ファイルのディレクトリを指定 
+        $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+        // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
+        if(strpos(array_shift(get_headers($filename)),'OK')){
+          // とりあえずeventからuserIdとってきて無理やりpush通知
+          $bot->pushMessage($userId, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+          // そのあとreplytoken使って画像を送信
+          replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+        }else{
+          // ファイルがない場合はその旨のメッセージを送信する
+          $bot->replyText($event->getReplyToken(),
+          date('n月j日'). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+        }
+        break;
+        
+      // ユーザーからのテキストによってシフト画像を送信する
+      // 明日のパターン
+      case "明日":
+      case "あした":
+      case "あす":
+      case "tomorrow":
+      case "Tomorrow":
+      case "TOMORROW":
+        $theday = date('Ymd',strtotime('+1 day'));
+        $message = date('n月j日',strtotime('+1 day'))."のシフトです";
+        $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
+        // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
+        if(strpos(array_shift(get_headers($filename)),'OK')){
+          // とりあえずeventからuserIdとってきて無理やりpush通知
+          $bot->pushMessage($userId, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+          // そのあとreplytoken使って画像を送信
+          replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+        }else{
+          // ファイルがない場合はその旨のメッセージを送信する
+          $bot->replyText($event->getReplyToken(),
+          date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+        }
+        break;
+      
+      // どれでもない場合は、時間帯によって挨拶しとく
+      default:
+        if(date('G') > 6 && date('G') < 12){
+          $bot->replyText($event->getReplyToken(),"おはようございます");
+        }else if(date('G') >= 12 && date('G') < 18){
+          $bot->replyText($event->getReplyToken(),"こんにちは");
+        }else if(date('G') >= 2 && date('G') < 6){
+          $bot->replyText($event->getReplyToken(),"はよ寝なさい");
+        }else{
+          $bot->replyText($event->getReplyToken(),"こんばんは");
+        }
+        break;
+    }
+    
   }
 
   
