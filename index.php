@@ -471,8 +471,6 @@ function unidentifiedWorkers($name){
   return $actionArray;
 }
 
-
-// 
 /*
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
 // デバッグ用
