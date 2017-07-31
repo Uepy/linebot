@@ -62,7 +62,6 @@ foreach ($events as $event) {
     error_log("\n Your userID is registerd in database now.");
   }
   
-  pushShift(date('Ymd'));
   
   // userid登録フェーズ
   if(getReady2Identify($event->getUserId())){
@@ -400,18 +399,7 @@ function unidentifiedWorkers($name){
   return $actionArray;
 }
 
-function pushShift($date){
-  $dbh = dbConnection::getConnection();
-  // 
-  $sql = 'select pgp_sym_decrypt(x.userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') , x.name , y.shift_in , y.shift_out from tbl_workers_info as x 
-  join tbl_'.$date. ' as y using(id);';
-  $sth = $dbh->query($sql);
-  $shiftDataArray = $sth->fetchAll();
-  error_log("\n shiftDataArray : " . print_r($shiftDataArray,true));
-  foreach($shiftDataArray as $value){
-    error_log("\n".$value[1]."さん、シフトイン時刻は" .substr($value[2],0,5). "シフトアウト時刻は".substr($value[3],0,5)."です。あなたのuseridは".$value[0]."です。");
-  }
-}
+
 
 /*
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
