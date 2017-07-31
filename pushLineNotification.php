@@ -2,14 +2,18 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
+
+// 従業員情報のテーブル名を定義
+define('WORKERS_INFO','tbl_workers_info');
+
 //アクセストークンでCurlHTTPClientをインスタンス化
 $httpClient = new \LINE\LINEBot\HTTPClient\CurlHTTPClient(getenv('CHANNEL_ACCESS_TOKEN'));
 
 // CurlHTTPClient とシークレットを使いLineBotをインスタンス化
 $bot = new \LINE\LINEBot($httpClient,['channelSecret' => getenv('CHANNEL_SECRET')]);
 
-// シフトをプッシュ通知する
-pushShift($bot,date('Ymd'));
+// 明日のシフトユーザーにをプッシュ通知する
+pushShift($bot,date('Ymd',strtotime('+1 day')));
 
 // データベースへの接続を管理するクラス
 class dbConnection{
@@ -47,7 +51,7 @@ class dbConnection{
 function pushShift($bot,$date){
   $dbh = dbConnection::getConnection();
   // 
-  $sql = 'select pgp_sym_decrypt(x.userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') , x.name , y.shift_in , y.shift_out from tbl_workers_info as x 
+  $sql = 'select pgp_sym_decrypt(x.userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') , x.name , y.shift_in , y.shift_out from '. WORKERS_INFO .' as x 
   join tbl_'.$date. ' as y using(id);';
   $sth = $dbh->query($sql);
   $shiftDataArray = $sth->fetchAll();
@@ -55,7 +59,7 @@ function pushShift($bot,$date){
   foreach($shiftDataArray as $value){
     $response = $bot->pushMessage($value[0], 
     new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(
-        $value[1]."さん\n出勤時刻は" .substr($value[2],0,5). "\n退勤予定時刻は".substr($value[3],0,5)."です。\nよろしくお願いします！"));
+        $value[1]."さん！\n明日、".date('n月j日') . "はシフトインしております！\n出勤時刻は" .substr($value[2],0,5). "\n退勤予定時刻は".substr($value[3],0,5)."です。\nよろしくお願いします！"));
     if (!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
     }

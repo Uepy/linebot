@@ -50,23 +50,28 @@ foreach ($events as $event) {
   error_log('Bot has replyed massage. This bot is running on github');
   */
   
+  // ユーザーIDの取得
+  $userId = $event->getUserId();
+  $userText = $event->getText();
+  
   // ユーザーIDをコンソールに表示
-  error_log("\nuserID : " . $event->getUserId());
+  error_log("\nuserID : " . $userId);
   
   
   // ユーザーIDが登録されてなければ登録する
-  if(is_registeredUserId($event->getUserId())){
+  if(is_registeredUserId($userId)){
     error_log("\n Your userID is already registerd.");
   }else{
-    setRegisterUserId($event->getUserId());
+    registerUserId($userId);
     error_log("\n Your userID is registerd in database now.");
   }
   
   
   // userid登録フェーズ
-  if(getReady2Identify($event->getUserId())){
-    // ユーザーから送られてきたテキストが、未登録者であるか
-    $templatePostbackAction = unidentifiedWorkers($event->getText());
+  // TABLE_TO_IDENTIFYのready_to_idnetifyがtureの時のみ通過
+  if(getReady2Identify($userId)){
+    // ユーザーから送られてきたテキスト(名前)が、未登録者であるか
+    $templatePostbackAction = unidentifiedWorkers($userText);
     if($templatePostbackAction){
       $alterText = 'LINEのアカウントに名前を登録します';
       $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
@@ -78,95 +83,128 @@ foreach ($events as $event) {
     }else{
       $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
       . APP_MANAGER . "に問い合わせてみてください。");
-      setReady2Identify($event->getUserId(),'false');
+      setReady2Identify($userId,'false');
     }
   }
   
-  if($event instanceof \LINE\LINEBot\Event\PostbackEvent && getReady2Identify($event->getUserId())){
+
+  // イベントがPostBackの時、TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
+  if($event instanceof \LINE\LINEBot\Event\PostbackEvent){
     
-  }
-  
-  // "登録"というテキストが来たら、userid登録フェーズに移る
-  if($event->getText() == "登録"){
-    // すでにuseridが登録されていたらはじく
-    if(getIsIdentified($userId)){
-      $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
-    }else{ 
-      setReady2Identify($event->getUserId(),'true');
-      $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください");
-    }
-  }
-  
-  
-  
-  // ユーザーからのテキストによってシフト画像を送信する
-  // phpの例外処理がよくわからん！から、このtry-catch文はよくないかもしれない
-    // 今日のパターン
-  if($event->getText() == "今日" || $event->getText() == "きょう" ){
-    
-    // thedayには「20170620」みたいに格納される
-    $theday = date('Ymd');
-    $message = date('n月j日')."のシフトです";
-    // ファイルのディレクトリを指定 
-    // 絶対パス指定
-    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
-    // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
-    if(strpos(array_shift(get_headers($filename)),'OK')){
-      // とりあえずeventからuserIdとってきて無理やりpush通知
-      $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-      // そのあとreplytoken使って画像を送信
-      replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
-    }else{
-      // ファイルがない場合はその旨のメッセージを送信する
-      $bot->replyText($event->getReplyToken(),
-      date('n月j日'). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
-    }
-
-  // 明日のパターン
-  }else if($event->getText() == "明日" || $event->getText() == "あした"){
-    $theday = date('Ymd',strtotime('+1 day'));
-    $message = date('n月j日',strtotime('+1 day'))."のシフトです";
-    $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
-    // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
-    if(strpos(array_shift(get_headers($filename)),'OK')){
-      // とりあえずeventからuserIdとってきて無理やりpush通知
-      $bot->pushMessage($event->getUserId(), new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
-      // そのあとreplytoken使って画像を送信
-      replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
-    }else{
-      // ファイルがない場合はその旨のメッセージを送信する
-      $bot->replyText($event->getReplyToken(),
-      date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
-    }
-  }
-  
-
-  
-  /*
-  if($event->getText() == "登録"){
-    $alterText = 'LINEのアカウントに名前を登録します';
-    $imageUrl = 'https://'.$_SERVER['HTTP_HOST'].'/img/identify.jpg';
-    $title = 'ユーザー登録';
-    $text = "以下よりあなたの名前を選んでください";
-    $actionArray = array();
-    replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,notIdentifiedWorkers());
-  }
-  */
-
-  // getReplyTokenが生きてる(まだ何も返信してない)場合、挨拶しとく
-  if($event->getReplyToken()){
-    if(date('G') > 6 && date('G') < 12){
-      $bot->replyText($event->getReplyToken(),"おはようございます");
-    }else if(date('G') >= 12 && date('G') < 18){
-      $bot->replyText($event->getReplyToken(),"こんにちは");
-    }else if(date('G') >= 2 && date('G') < 6){
-      $bot->replyText($event->getReplyToken(),"はよ寝なさい");
-    }else{
-      $bot->replyText($event->getReplyToken(),"こんばんは");
-    }
-  }
+    switch ($event->getPostbackData()) {
       
+      case 'cmd_cancel':
+        setUserName($userId,'');
+        setReady2Identify($userId,'false');
+        $bot->replyText($event->getReplyToken(), "登録はキャンセルされました");
+        break;
+        
+        
+      case 'cmd_OK':
+        $userName = getUserName($userId);
+        setReady2Identify($userId,'false');
+        setIsIdentified($userId,'true');
+        setUserId($userId,$userName);
+        $bot->replyText($event->getReplyToken(), "あなたを「".$userName."」さんで登録しました");
+        break;
+        
+      default :
+        if(getReady2Identify($userId)){
+          // 一時的に名前を登録、is_identifiedはtrueにしない
+          setUserName($userId,$event->getPostbackData(),5);
+          replyConfirmTemplate($bot, $event->getReplyToken(),
+          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
+          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
+          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
+          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_cancel'));
+        }
+        break;
+  }
   
+  
+  switch ($userText) {
+    
+    // "登録"というテキストが来たら、userid登録フェーズに移る
+    case '登録':
+      // すでにuseridが登録されていたらはじく
+      if(getIsIdentified($userId)){
+        $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
+      }else{ 
+        setReady2Identify($userId,'true');
+        $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください");
+      }
+      break;
+      
+    // ユーザーからのテキストによってシフト画像を送信する
+    // 今日のパターン
+    case "今日":
+    case "きょう":
+    case "本日":
+    case "ほんじつ":
+    case "today":
+    case "Today":
+    case "TODAY":
+      // thedayには「20170620」みたいに格納される
+      $theday = date('Ymd');
+      $message = date('n月j日')."のシフトです";
+      // ファイルのディレクトリを指定 
+      $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg'; 
+      // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
+      if(strpos(array_shift(get_headers($filename)),'OK')){
+        // とりあえずeventからuserIdとってきて無理やりpush通知
+        $bot->pushMessage($userId, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+        // そのあとreplytoken使って画像を送信
+        replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+      }else{
+        // ファイルがない場合はその旨のメッセージを送信する
+        $bot->replyText($event->getReplyToken(),
+        date('n月j日'). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+      }
+      break;
+      
+    // ユーザーからのテキストによってシフト画像を送信する
+    // 明日のパターン
+    case "明日":
+    case "あした":
+    case "あす":
+    case "tomorrow":
+    case "Tomorrow":
+    case "TOMORROW":
+      $theday = date('Ymd',strtotime('+1 day'));
+      $message = date('n月j日',strtotime('+1 day'))."のシフトです";
+      $filename = 'https://'.$_SERVER['HTTP_HOST'].'/shiftpic/'.$theday.'.jpg';
+      // httpヘッダーからOKが返ってくるか(ファイルがあるかどうか)を調べる
+      if(strpos(array_shift(get_headers($filename)),'OK')){
+        // とりあえずeventからuserIdとってきて無理やりpush通知
+        $bot->pushMessage($userId, new \LINE\LINEBot\MessageBuilder\TextMessageBuilder($message));
+        // そのあとreplytoken使って画像を送信
+        replyImageMessage($bot,$event->getReplyToken(),$filename,$filename);
+      }else{
+        // ファイルがない場合はその旨のメッセージを送信する
+        $bot->replyText($event->getReplyToken(),
+        date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+      }
+      break;
+    
+    // どれでもない場合は、時間帯によって挨拶しとく
+    default:
+      if(date('G') > 6 && date('G') < 12){
+        $bot->replyText($event->getReplyToken(),"おはようございます");
+      }else if(date('G') >= 12 && date('G') < 18){
+        $bot->replyText($event->getReplyToken(),"こんにちは");
+      }else if(date('G') >= 2 && date('G') < 6){
+        $bot->replyText($event->getReplyToken(),"はよ寝なさい");
+      }else{
+        $bot->replyText($event->getReplyToken(),"こんばんは");
+      }
+      break;
+  }
+
+  
+  
+
+  
+
 
   
 
@@ -276,7 +314,7 @@ class dbConnection{
 // is_registeredUserId()と併用すべし
 // ** 狭域かつ限定的にしかシフト通知君を公開していないのでこれでもいいかもしれないが
 // システムが大きくなればこれはよくない気がする **
-function setRegisterUserId($userId){
+function registerUserId($userId){
   $dbh = dbConnection::getConnection();
   // pgp_sym_encryptは暗号化 引数は(暗号化するデータ, 共有鍵) 共有鍵はherokuに登録してある
   $sql = 'insert into ' . TABLE_TO_IDENTIFY . ' (userid) values 
@@ -302,17 +340,44 @@ function is_registeredUserId($userId){
     return true;
   }
 }
+
+// WORKERS_INFOにuseridを登録する
+function setUserId($userId,$name){
+  $dbh = dbConnection::getConnection();
+  $sql = 'update tbl_workers_info 
+  set userid = pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') where name = ?';
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($userId,$name));
+}
   
 // TABLE_TO_IDENTIFYに名前を登録する
 function setUserName($userId,$name){
   $dbh = dbConnection::getConnection();
-  // useridに名前を登録したら、フィールドis_identifiedもtrueにする
-  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = ? , is_identified = true where userid = 
+  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = ?  where userid = 
   (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($name,$userId));
 }
 
+// TABLE_TO_IDENTIFYの名前を返す
+function getUserName($userId){
+  $dbh = dbConnection::getConnection();
+  $sql = 'select name from ' . TABLE_TO_IDENTIFY . ' where ? =
+  (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($userId));
+  $userName = array_column($sth->fetchAll(),'name');
+  return $userName[0];
+}
+
+// TABLE_TO_IDENTIFYのis_identifiedの(true/false)をスイッチする
+function setIsIdentified($userId,$bool){
+  $dbh = dbConnection::getConnection();
+  $sql = 'update ' . TABLE_TO_IDENTIFY . ' set is_identified = ? where ? =
+  (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($bool,$userId));
+}
 
 // TABLE_TO_IDENTIFYのis_identifiedの(true/false)を返す
 function getIsIdentified($userId){
@@ -387,15 +452,20 @@ function unidentifiedWorkers($name){
   name NOT IN (select name from ' . TABLE_TO_IDENTIFY .' where is_identified = true)';
   $sth = $dbh->query($sql);
   $nameArray = array_column($sth->fetchAll(),'name');
-  $actionArray = array();
-  
-  foreach($nameArray as $value){
-    if($value == $name){
-      $actionArray[] = new 
-      LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,'cmd_'. $value);
+  if($nameArray){
+    $actionArray = array();
+    
+    foreach($nameArray as $value){
+      if($value == $name){
+        $actionArray[] = new 
+        LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder($value,'cmd_'. $value);
+      }
     }
+    
+    // actionArrayの最後にキャンセルのボタンも追加する
+    $actionArray[] = new 
+        LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('キャンセル','cmd_cancel');
   }
-
   return $actionArray;
 }
 
