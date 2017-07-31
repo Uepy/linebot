@@ -264,8 +264,12 @@ function replyButtonsTemplate($bot,$replyToken,$alterText,$imageUrl,$title,$text
 
 // Confirm テンプレートを返信 
 // 引数(LINEBot,返信先,代替テキスト,本文,可変長アクション配列)
-function replyConfirmTemplate($bot,$replyToken,$alterText,$text,$actionArray){
+function replyConfirmTemplate($bot,$replyToken,$alterText,$text,...$actions){
 
+  $actionArray = array();
+  foreach($actions as $value){
+    array_push($actionArray,$value);
+  }
   // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
   $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
   // ButtonTemplateBuilderの引数(タイトル,本文,画像URL,アクション配列)
