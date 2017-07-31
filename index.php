@@ -62,6 +62,8 @@ foreach ($events as $event) {
     error_log("\n Your userID is registerd in database now.");
   }
   
+  pushShift(date('Ymd'));
+  
   // userid登録フェーズ
   if(getReady2Identify($event->getUserId())){
     // ユーザーから送られてきたテキストが、未登録者であるか
@@ -75,8 +77,8 @@ foreach ($events as $event) {
       replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
       
     }else{
-      $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。
-      一度" . APP_MANAGER . "に問い合わせてみてください。");
+      $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
+      . APP_MANAGER . "に問い合わせてみてください。");
       setReady2Identify($event->getUserId(),'false');
     }
   }
@@ -398,6 +400,16 @@ function unidentifiedWorkers($name){
   return $actionArray;
 }
 
+function pushShift($date){
+  $dbh = dbConnection::getConnection();
+  // 
+  $sql = 'select x.userid , x.name , y.shift_in , y.shift_out from tbl_workers_info as x 
+  join tbl_? as y using(id);';
+  $sth = $dbh->prepare($sql);
+  $sth->execute(array($date));
+  $shiftDataArray = $sth->fetchAll();
+  error_log("\nshiftDataArray : " . print_r($shiftDataArray,true));
+}
 
 /*
 // TABLE_TO_IDENTIFYに登録されているuserIDで名前が未登録の人の名前を配列でエラーログに出す
