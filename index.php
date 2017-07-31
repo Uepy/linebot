@@ -119,6 +119,7 @@ foreach ($events as $event) {
           new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_cancel'));
         }
         break;
+    }
   }
   
   
