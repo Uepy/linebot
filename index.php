@@ -33,11 +33,6 @@ try {
 }
 // 配列に格納された各イベントをループ処理
 foreach ($events as $event) {
-  if (!($event instanceof \LINE\LINEBot\Event\MessageEvent\TextMessage)) {
-    // $bot->replyText($event->getReplyToken(), "そんなもん送られても困ります");
-    error_log('Non text message has come');
-    continue;
-  }
   
   /*
   // テキスト返信
