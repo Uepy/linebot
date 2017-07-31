@@ -42,6 +42,48 @@ foreach ($events as $event) {
   
   // ユーザーIDの取得
   $userId = $event->getUserId();
+  // イベントがPostBackの時、
+  if($event instanceof \LINE\LINEBot\Event\PostbackEvent){
+    
+    switch ($event->getPostbackData()) {
+      
+      case 'cmd_cancel':
+        setUserName($userId,'');
+        setReady2Identify($userId,'false');
+        $bot->replyText($event->getReplyToken(), "登録はキャンセルされました");
+        break;
+        
+        
+      case 'cmd_OK':
+        $userName = getUserName($userId);
+        setReady2Identify($userId,'false');
+        setIsIdentified($userId,'true');
+        setUserId($userId,$userName);
+        $bot->replyText($event->getReplyToken(), "あなたを「".$userName."」さんで登録しました");
+        break;
+        
+      default :
+        // TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
+        if(getReady2Identify($userId)){
+          // 一時的に名前を登録、is_identifiedはtrueにしない
+          setUserName($userId,$event->getPostbackData(),5);
+          replyConfirmTemplate($bot, $event->getReplyToken(),
+          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
+          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
+          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
+          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_cancel'));
+        }
+        break;
+    }
+  }
+  
+  
+  
+  
+  
+  
+  
+  
   $userText = $event->getText();
   
   // ユーザーIDをコンソールに表示
@@ -78,40 +120,7 @@ foreach ($events as $event) {
   }
   
 
-  // イベントがPostBackの時、
-  if($event instanceof \LINE\LINEBot\Event\PostbackEvent){
-    
-    switch ($event->getPostbackData()) {
-      
-      case 'cmd_cancel':
-        setUserName($userId,'');
-        setReady2Identify($userId,'false');
-        $bot->replyText($event->getReplyToken(), "登録はキャンセルされました");
-        break;
-        
-        
-      case 'cmd_OK':
-        $userName = getUserName($userId);
-        setReady2Identify($userId,'false');
-        setIsIdentified($userId,'true');
-        setUserId($userId,$userName);
-        $bot->replyText($event->getReplyToken(), "あなたを「".$userName."」さんで登録しました");
-        break;
-        
-      default :
-        // TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
-        if(getReady2Identify($userId)){
-          // 一時的に名前を登録、is_identifiedはtrueにしない
-          setUserName($userId,$event->getPostbackData(),5);
-          replyConfirmTemplate($bot, $event->getReplyToken(),
-          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
-          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
-          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
-          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_cancel'));
-        }
-        break;
-    }
-  }
+  
   
   
   switch ($userText) {
