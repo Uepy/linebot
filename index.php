@@ -404,9 +404,8 @@ function pushShift($date){
   $dbh = dbConnection::getConnection();
   // 
   $sql = 'select x.userid , x.name , y.shift_in , y.shift_out from tbl_workers_info as x 
-  join tbl_? as y using(id);';
-  $sth = $dbh->prepare($sql);
-  $sth->execute(array($date));
+  join tbl_'.$date. ' as y using(id);';
+  $sth = $dbh->query($sql);
   $shiftDataArray = $sth->fetchAll();
   error_log("\nshiftDataArray : " . print_r($shiftDataArray,true));
 }
