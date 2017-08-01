@@ -358,6 +358,7 @@ function setUserId($userId,$name){
   
 // TABLE_TO_IDENTIFYに名前を登録する
 function setUserName($userId,$name){
+  error_log("\nname :" .$name);
   $dbh = dbConnection::getConnection();
   $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = \''.$name.'\'  where userid = 
   (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
