@@ -74,7 +74,7 @@ foreach ($events as $event) {
           'あなたは'. substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
           'あなたは'. substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
           new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
-          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_cancel'));
+          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('いいえ','cmd_cancel'));
         }
         break;
     }
@@ -359,7 +359,7 @@ function setUserId($userId,$name){
 // TABLE_TO_IDENTIFYに名前を登録する
 function setUserName($userId,$name){
   $dbh = dbConnection::getConnection();
-  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = ?  where userid = 
+  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = '.$name.'  where userid = 
   (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($name,$userId));
