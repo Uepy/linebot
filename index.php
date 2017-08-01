@@ -361,7 +361,7 @@ function setUserName($userId,$name){
   error_log("\nname :" .$name);
   $dbh = dbConnection::getConnection();
   $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = \''.$name.'\'  where userid = 
-  (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  (pgp_sym_decrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
 }
