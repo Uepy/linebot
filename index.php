@@ -360,8 +360,8 @@ function setUserId($userId,$name){
 function setUserName($userId,$name){
   error_log("\nname :" .$name);
   $dbh = dbConnection::getConnection();
-  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = \''.$name.'\'  where userid = 
-  (pgp_sym_decrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
+  $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = \''.$name.'\'  
+  where (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') ) = ? ';
   $sth = $dbh->prepare($sql);
   $sth->execute(array($userId));
 }
