@@ -68,11 +68,11 @@ foreach ($events as $event) {
         if(getReady2Identify($userId)){
           error_log("\nここ通りました2");
           // 一時的に名前を登録、is_identifiedはtrueにしない
-          setUserName($userId,$event->getPostbackData(),5);
+          setUserName($userId,mb_substr($event->getPostbackData(),4));
            error_log("\nここ通りました3");
           replyConfirmTemplate($bot, $event->getReplyToken(),
-          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
-          'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
+          'あなたは'. mb_substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
+          'あなたは'. mb_substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
           new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
           new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_cancel'));
         }
