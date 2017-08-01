@@ -64,9 +64,12 @@ foreach ($events as $event) {
         
       default :
         // TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
+        error_log("\nここ通りました1");
         if(getReady2Identify($userId)){
+          error_log("\nここ通りました2");
           // 一時的に名前を登録、is_identifiedはtrueにしない
           setUserName($userId,$event->getPostbackData(),5);
+           error_log("\nここ通りました3");
           replyConfirmTemplate($bot, $event->getReplyToken(),
           'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
           'あなたは'. substr($event->getPostbackData(),5) . 'さんで間違いありませんか？',
@@ -104,7 +107,7 @@ foreach ($events as $event) {
         $text = "あなたの名前を選んでください";
         $actionArray = array();
         replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
-        
+         error_log("\nここ通りました0");
       }else{
         $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
         . APP_MANAGER . "に問い合わせてみてください。");
@@ -260,20 +263,23 @@ function replyButtonsTemplate($bot,$replyToken,$alterText,$imageUrl,$title,$text
 // Confirm テンプレートを返信 
 // 引数(LINEBot,返信先,代替テキスト,本文,可変長アクション配列)
 function replyConfirmTemplate($bot,$replyToken,$alterText,$text,...$actions){
-
+  error_log("\nここ通りました4");
   $actionArray = array();
   foreach($actions as $value){
     array_push($actionArray,$value);
   }
   // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
+  error_log("\nここ通りました5");
+  error_log("\naltertext :".$alterText);
+  error_log("\ntext :".$text);
   $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
-  // ButtonTemplateBuilderの引数(タイトル,本文,画像URL,アクション配列)
   new \LINE\LINEBot\MessageBuilder\TemplateBuilder\ConfirmTemplateBuilder(
     $text,$actionArray));
-    
+  error_log("\nここ通りました6");
   $response = $bot -> replyMessage($replyToken,$builder);
   if(!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
+    error_log("\nここ通りました7");
   }
 }
 
