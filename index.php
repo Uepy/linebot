@@ -42,15 +42,22 @@ foreach ($events as $event) {
   
   // ユーザーIDの取得
   $userId = $event->getUserId();
-  // イベントがPostBackの時、
-  if($event instanceof \LINE\LINEBot\Event\PostbackEvent){
+  
+  // 登録されているユーザー名の取得
+  $identifiedName = '';
+  if(getIsIdentified($userId)){
+    $identifiedName = getUserName($userId)."さん。\n";
+  }
+  
+  // イベントがPostBackの時、かつTABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
+  if($event instanceof \LINE\LINEBot\Event\PostbackEvent && getReady2Identify($userId)){
     
     switch ($event->getPostbackData()) {
       
       case 'cmd_cancel':
         setUserName($userId,'');
         setReady2Identify($userId,'false');
-        $bot->replyText($event->getReplyToken(), "登録はキャンセルされました");
+        $bot->replyText($event->getReplyToken(), "登録はキャンセルされました。");
         break;
         
         
@@ -59,23 +66,19 @@ foreach ($events as $event) {
         setReady2Identify($userId,'false');
         setIsIdentified($userId,'true');
         setUserId($userId,$userName);
-        $bot->replyText($event->getReplyToken(), "あなたを「".$userName."」さんで登録しました");
+        $bot->replyText($event->getReplyToken(), "あなたを「".$userName."」さんで登録しました。\n登録ありがとうございます");
         break;
         
       default :
-        // TABLE_TO_IDENTIFYのready_to_idnetifyがtrueの時のみ通過
-        error_log("\nここ通りました1");
-        if(getReady2Identify($userId)){
-          error_log("\nここ通りました2");
-          // 一時的に名前を登録、is_identifiedはtrueにしない
-          setUserName($userId,substr($event->getPostbackData(),4));
-           error_log("\nここ通りました3");
-          replyConfirmTemplate($bot, $event->getReplyToken(),
-          'あなたは'. substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
-          'あなたは'. substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
-          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
-          new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('いいえ','cmd_cancel'));
-        }
+
+        // 一時的に名前を登録、is_identifiedはtrueにしない
+        setUserName($userId,substr($event->getPostbackData(),4));
+        replyConfirmTemplate($bot, $event->getReplyToken(),
+        'あなたは'. substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
+        'あなたは'. substr($event->getPostbackData(),4) . 'さんで間違いありませんか？',
+        new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('はい','cmd_OK'),
+        new LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('いいえ','cmd_cancel'));
+      
         break;
     }
     
@@ -110,7 +113,7 @@ foreach ($events as $event) {
          error_log("\nここ通りました0");
       }else{
         $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
-        . APP_MANAGER . "に問い合わせてみてください。");
+        . APP_MANAGER . "に問い合わせてみてください。\n登録はキャンセルされました。");
         setReady2Identify($userId,'false');
       }
     }
@@ -125,10 +128,10 @@ foreach ($events as $event) {
       case '登録':
         // すでにuseridが登録されていたらはじく
         if(getIsIdentified($userId)){
-          $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています");
+          $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています。");
         }else{ 
           setReady2Identify($userId,'true');
-          $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください");
+          $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください。");
         }
         break;
         
@@ -155,7 +158,7 @@ foreach ($events as $event) {
         }else{
           // ファイルがない場合はその旨のメッセージを送信する
           $bot->replyText($event->getReplyToken(),
-          date('n月j日'). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+          "すみません。\n".date('n月j日'). "のシフト画像が見つかりませんでした。まだ登録されていないかもしれません。");
         }
         break;
         
@@ -179,20 +182,20 @@ foreach ($events as $event) {
         }else{
           // ファイルがない場合はその旨のメッセージを送信する
           $bot->replyText($event->getReplyToken(),
-          date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした\nまだ登録されていないかもしれません");
+          "すみません。\n".date('n月j日',strtotime('+1 day')). "のシフト画像が見つかりませんでした。まだ登録されていないかもしれません。");
         }
         break;
       
       // どれでもない場合は、時間帯によって挨拶しとく
       default:
         if(date('G') > 6 && date('G') < 12){
-          $bot->replyText($event->getReplyToken(),"おはようございます");
+          $bot->replyText($event->getReplyToken(),$identifiedName."おはようございます");
         }else if(date('G') >= 12 && date('G') < 18){
-          $bot->replyText($event->getReplyToken(),"こんにちは");
+          $bot->replyText($event->getReplyToken(),$identifiedName."こんにちは");
         }else if(date('G') >= 2 && date('G') < 6){
-          $bot->replyText($event->getReplyToken(),"はよ寝なさい");
+          $bot->replyText($event->getReplyToken(),$identifiedName."はよ寝な明日起きられへんで。");
         }else{
-          $bot->replyText($event->getReplyToken(),"こんばんは");
+          $bot->replyText($event->getReplyToken(),$identifiedName."こんばんは");
         }
         break;
     }
@@ -263,15 +266,11 @@ function replyButtonsTemplate($bot,$replyToken,$alterText,$imageUrl,$title,$text
 // Confirm テンプレートを返信 
 // 引数(LINEBot,返信先,代替テキスト,本文,可変長アクション配列)
 function replyConfirmTemplate($bot,$replyToken,$alterText,$text,...$actions){
-  error_log("\nここ通りました4");
   $actionArray = array();
   foreach($actions as $value){
     array_push($actionArray,$value);
   }
   // TemplateMessageBuilderの引数(代替テキスト,ButtonTemplateBuilder)
-  error_log("\nここ通りました5");
-  error_log("\naltertext :".$alterText);
-  error_log("\ntext :".$text);
   $builder = new \LINE\LINEBot\MessageBuilder\TemplateMessageBuilder($alterText,
   new \LINE\LINEBot\MessageBuilder\TemplateBuilder\ConfirmTemplateBuilder(
     $text,$actionArray));
@@ -279,7 +278,6 @@ function replyConfirmTemplate($bot,$replyToken,$alterText,$text,...$actions){
   $response = $bot -> replyMessage($replyToken,$builder);
   if(!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
-    error_log("\nここ通りました7");
   }
 }
 
@@ -358,7 +356,7 @@ function setUserId($userId,$name){
   
 // TABLE_TO_IDENTIFYに名前を登録する
 function setUserName($userId,$name){
-  error_log("\nname :" .$name);
+  //error_log("\nname :" .$name);
   $dbh = dbConnection::getConnection();
   $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = \''.$name.'\'  
   where (pgp_sym_decrypt(userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') ) = ? ';
@@ -422,10 +420,10 @@ function getReady2Identify($userId){
   $ready = array_column($sth->fetchAll(),'ready_to_identify');
   //error_log("\nready : " . print_r($ready,true));
   if($ready[0] == 1){
-    error_log("\nready is true " );
+    //error_log("\nready is true " );
     return true;
   }else{
-    error_log("\nready is false" );
+    //error_log("\nready is false" );
     return false;
   }
   
@@ -472,10 +470,10 @@ function unidentifiedWorkers($name){
     // actionArrayの最後にキャンセルのボタンも追加する
     $actionArray[] = new 
         LINE\LINEBot\TemplateActionBuilder\PostbackTemplateActionBuilder('キャンセル','cmd_cancel');
-    error_log("\nactionArray : " . print_r($actionArray,true));
+    //error_log("\nactionArray : " . print_r($actionArray,true));
     return $actionArray;
   }else{
-    error_log("\nactionArray : " . print_r($actionArray,true));
+    //error_log("\nactionArray : " . print_r($actionArray,true));
     return $actionArray;
   }
 }
