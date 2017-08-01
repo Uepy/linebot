@@ -362,7 +362,7 @@ function setUserName($userId,$name){
   $sql = 'update ' . TABLE_TO_IDENTIFY .' set name = '.$name.'  where userid = 
   (pgp_sym_encrypt(?,\'' . getenv('DB_ENCRYPT_PASS') . '\') )' ;
   $sth = $dbh->prepare($sql);
-  $sth->execute(array($name,$userId));
+  $sth->execute(array($userId));
 }
 
 // TABLE_TO_IDENTIFYの名前を返す
