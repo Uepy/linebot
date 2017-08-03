@@ -110,7 +110,6 @@ foreach ($events as $event) {
         $text = "あなたの名前を選んでください";
         $actionArray = array();
         replyButtonsTemplate($bot, $event->getReplyToken(),$alterText,$imageUrl,$title,$text,$templatePostbackAction);
-         error_log("\nここ通りました0");
       }else{
         $bot->replyText($event->getReplyToken(), "あなたの名前で別の誰かが登録しているか、まだ聞いたことがありません。一度"
         . APP_MANAGER . "に問い合わせてみてください。\n登録はキャンセルされました。");
@@ -128,7 +127,7 @@ foreach ($events as $event) {
       case '登録':
         // すでにuseridが登録されていたらはじく
         if(getIsIdentified($userId)){
-          $bot->replyText($event->getReplyToken(), "あなたは既に名前が登録されています。");
+          $bot->replyText($event->getReplyToken(), $identifiedName."あなたは既に名前が登録されています。");
         }else{ 
           setReady2Identify($userId,'true');
           $bot->replyText($event->getReplyToken(), "あなたの名前を「フルネーム」で教えてください。");

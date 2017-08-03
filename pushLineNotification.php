@@ -47,7 +47,7 @@ class dbConnection{
     
 }
 
-
+// WORKERS_INFOに登録されているユーザーidにシフト情報をpush通知する
 function pushShift($bot,$date){
   $dbh = dbConnection::getConnection();
   // 
@@ -59,7 +59,7 @@ function pushShift($bot,$date){
   foreach($shiftDataArray as $value){
     $response = $bot->pushMessage($value[0], 
     new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(
-        $value[1]."さん！\n明日、".date('n月j日') . "はシフトインしております！\n出勤時刻は" .substr($value[2],0,5). "\n退勤予定時刻は".substr($value[3],0,5)."です。\nよろしくお願いします！"));
+        $value[1]."さん！\n明日、".date('n月j日',strtotime('+1 day')) . "はシフトインしております！\n出勤時刻は" .substr($value[2],0,5). "\n退勤予定時刻は".substr($value[3],0,5)."です。\nよろしくお願いします！"));
     if (!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
     }
