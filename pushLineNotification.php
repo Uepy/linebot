@@ -50,6 +50,9 @@ class dbConnection{
 // WORKERS_INFOに登録されているユーザーidにシフト情報をpush通知する
 function pushShift($bot,$date){
   $dbh = dbConnection::getConnection();
+  
+  $weekday = array( "日", "月", "火", "水", "木", "金", "土" );
+  //print $weekday[date("w")]."曜日";
   // 
   $sql = 'select pgp_sym_decrypt(x.userid,\'' . getenv('DB_ENCRYPT_PASS') . '\') , x.name , y.shift_in , y.shift_out from '. WORKERS_INFO .' as x 
   join tbl_'.$date. ' as y using(id);';
@@ -59,7 +62,8 @@ function pushShift($bot,$date){
   foreach($shiftDataArray as $value){
     $response = $bot->pushMessage($value[0], 
     new \LINE\LINEBot\MessageBuilder\TextMessageBuilder(
-        $value[1]."さん！\n明日、".date('n月j日',strtotime('+1 day')) . "はシフトインしております！\n出勤時刻は" .substr($value[2],0,5). "\n退勤予定時刻は".substr($value[3],0,5)."です。\nよろしくお願いします！"));
+        $value[1]."さん！\n明日、".date('n月j日',strtotime('+1 day')) . "(".$weekday[date('w',strtotime('+1 day'))].")はシフトインしております！
+        \n出勤時刻は" .substr($value[2],0,5). "\n退勤予定時刻は".substr($value[3],0,5)."です。\nよろしくお願いします！"));
     if (!$response->isSucceeded()){
     error_log('failed!' . $response->getHTTPStatus . ' ' . $response->getRawBody());
     }
